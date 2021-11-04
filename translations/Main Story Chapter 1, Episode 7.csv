@@ -37,7 +37,7 @@ Name,メジロマックイーン,Name,Mejiro McQueen
 Text,え、ええ……頑張りましょう。,Text,Y-Yes... Good luck.
 ,,,
 Line,8,Line,8
-Name,<username>,Name,Holo
+Name,<username>,Name,<username>
 Text,"みんな、マックイーンの走りに
 惹かれたみたいだね。",Text,It seems like they've all been charmed 
 ,,,"by the way you run, McQueen."
@@ -52,13 +52,13 @@ Text,はぁ……ふぅ……。,Text,"Trainer-san, what was my time?"
 ,トレーナーさん、今のタイムは？,,
 ,,,
 Line,11,Line,11
-Name,<username>,Name,Holo
+Name,<username>,Name,<username>
 Text,"6ハロン80秒ジャスト！
 文句なしのタイムだ！",Text,6 furlongs in about 80 seconds!
 ,,,I can't complain about that!
 Line,12,,
 Name,<username>,Line,12
-Text,6ハロン80秒ジャスト！,Name,Holo
+Text,6ハロン80秒ジャスト！,Name,<username>
 ,文句なしのタイム！,Text,6 furlongs in about 80 seconds!
 ,,,I have no complaints!
 Line,13,,
@@ -78,12 +78,12 @@ Text,ですけど、こうしてたくさんの方と,Name,Mejiro McQueen
 ,,,I've been able to train with others. I've truly missed it.
 Line,16,,
 Name,<username>,Line,16
-Text,これもすべて、マックイーンが,Name,Holo
+Text,これもすべて、マックイーンが,Name,<username>
 ,春の『天皇賞』で勝利した結果だよ。,Text,This is all thanks to your
 ,,,victory in the Spring Tenno Sho.
 Line,17,,
 Name,<username>,Line,17
-Text,これもすべて、マックイーンが,Name,Holo
+Text,これもすべて、マックイーンが,Name,<username>
 ,春の『天皇賞』で勝利した結果だよ。,Text,This is all thanks to your
 ,,,victory in the Spring Tenno Sho.
 Line,18,,
@@ -214,7 +214,7 @@ Text,"でも彼女の言う通りレース直後なんだし、
 Line,43,,
 Name,メジロマックイーン,Line,42
 Text,"ええ、次のレースのことも
-見据えておかないと……ですわね。",Name,Holo
+見据えておかないと……ですわね。",Name,<username>
 ,,Text,"But what she said is right. That race was not too long ago, "
 ,,,so let's take it easy for now.
 Line,44,,
