@@ -89,7 +89,10 @@ def load_dat(data):
                     if data[0] != '':
                         last_kw = data[0]
                     if line_data.get(last_kw):
-                        line_data[last_kw] += f'\r\n{data[1]}'
+                        try:
+                            line_data[last_kw] += f'\r\n{data[1]}'
+                        except Exception:
+                            pass
                     else:
                         try:
                             data[1] = int(data[1])
