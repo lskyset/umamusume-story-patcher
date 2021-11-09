@@ -22,8 +22,11 @@ for folder in folders:
         pass
 
 
-def extract_dat(dat, meta_path, save_path):
+def extract_storytimeline(dat, meta_path, save_path):
     path = f'../../dat/{dat[:2]}/{dat}'
+    backup = f'backup/{dat}'
+    if os.path.exists(backup):
+        path = backup
     env = UnityPy.load(path)
     data = {}
     for obj in env.objects:
@@ -63,8 +66,78 @@ def extract_dat(dat, meta_path, save_path):
             print(f"Extracted {save_path.split('/')[-1]}")
 
 
-def load_dat(data):
-    dat, slot, fp, *_ = data
+def extract_storyrace(dat, meta_path, save_path):
+    path = f'../../dat/{dat[:2]}/{dat}'
+    backup = f'backup/{dat}'
+    if os.path.exists(backup):
+        path = backup
+    env = UnityPy.load(path)
+    data = {}
+    for obj in env.objects:
+        if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
+            for node in obj.serialized_type.nodes:
+                if node.name == 'textData':
+                    tree = obj.read_typetree()
+                    for line in tree['textData']:
+                        key = line['key']
+                        data[key] = {}
+                        keep_params = ['text']
+                        for param in keep_params:
+                            data[key][param] = line[param]
+    if data:
+        story_data = sorted(data.items())
+        story = [['Language', '日本語'], ['Path', meta_path]]
+        for index, line in story_data:
+            story.append([])
+            story.append(['Line', index])
+            tmp_text = 'Text'
+            for sub_line in line['text'].split('\\n'):
+                story.append([tmp_text, sub_line])
+                tmp_text = ''
+        with open(save_path, 'w', encoding='utf-8', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerows(story)
+            print(f"Extracted {save_path.split('/')[-1]}")
+
+
+def extract_episode(data):
+    dir_paths = [
+        'extracted',
+        f"extracted/{data['story'].name}",
+        f"extracted/{data['story'].name}/{data['chapter'].id}.{data['chapter'].name}"
+    ]
+    for path in dir_paths:
+        try:
+            os.mkdir(path)
+        except FileExistsError:
+            pass
+
+    ep = data['episode']
+    if not (ep.multipart and ep.story_type_2):
+        str_tl_id = str(ep.tl_id)
+        meta_tl_id = '0' * (9 - len(str_tl_id)) + str_tl_id
+        if ep.type == 1:
+            meta_path, dat = m_c.execute(f"select n,h from a where n LIKE '%storytimeline_{meta_tl_id}'").fetchone()
+            extract_storytimeline(dat, meta_path, f"extracted/{data['story'].name}/{data['chapter'].id}.{data['chapter'].name}/{data['episode'].ep_num}.{data['episode'].name}.csv")
+        if ep.type == 3:
+            meta_path, dat = m_c.execute(f"select n,h from a where n LIKE '%storyrace_{meta_tl_id}'").fetchone()
+            extract_storyrace(dat, meta_path, f"extracted/{data['story'].name}/{data['chapter'].id}.{data['chapter'].name}/{data['episode'].ep_num}.{data['episode'].name}.csv")
+        return
+
+    for part in range(1, 6):
+        part_type = getattr(ep, f'story_type_{part}')
+        if part_type in [1, 3]:
+            str_tl_id = str(getattr(ep, f'story_id_{part}'))
+            meta_tl_id = '0' * (9 - len(str_tl_id)) + str_tl_id
+            if part_type == 1:
+                meta_path, dat = m_c.execute(f"select n,h from a where n LIKE '%storytimeline_{meta_tl_id}'").fetchone()
+                extract_storytimeline(dat, meta_path, f"extracted/{data['story'].name}/{data['chapter'].id}.{data['chapter'].name}/{data['episode'].ep_num}.{data['episode'].name} part{part}.csv")
+            if part_type == 3:
+                meta_path, dat = m_c.execute(f"select n,h from a where n LIKE '%storyrace_{meta_tl_id}'").fetchone()
+                extract_storyrace(dat, meta_path, f"extracted/{data['story'].name}/{data['chapter'].id}.{data['chapter'].name}/{data['episode'].ep_num}.{data['episode'].name} part{part}.csv")
+
+
+def read_csv_timeline(slot, fp):
     if os.path.exists(fp):
         with open(fp, 'r', encoding='utf-8') as f:
 
@@ -90,7 +163,7 @@ def load_dat(data):
                         last_kw = data[0]
                     if line_data.get(last_kw):
                         try:
-                            line_data[last_kw] += f'\r\n{data[1]}'
+                            line_data[last_kw] += f' \r\n{data[1]}'
                         except Exception:
                             pass
                     else:
@@ -104,58 +177,74 @@ def load_dat(data):
                     line_data = {}
                     last_kw = None
             save(line_data)
-        path = f'../../dat/{dat[:2]}/{dat}'
-        backup = f'backup/{dat}'
-        if not os.path.exists(backup):
-            try:
-                os.mkdir('backup')
-            except FileExistsError:
-                pass
-            copyfile(path, backup)
-        env = UnityPy.load(backup)
-        for obj in env.objects:
-            if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
-                for node in obj.serialized_type.nodes:
-                    if node.name == 'NextBlock':
-                        tree = obj.read_typetree()
-                        block = tree['NextBlock'] - 1 * (tree['NextBlock'] > 0)
-                        if story_data.get(block):
-                            tree = {**tree, **story_data[block]}
-                            for choice in story_data[block].get('Choices', []):
-                                try:
-                                    choice_index = choice.get('Number') - 1
-                                    tree['ChoiceDataList'][choice_index] = {**tree['ChoiceDataList'][choice_index], **choice}
-                                except IndexError:
-                                    pass
-                            if len(story_data[block].get('Text', '')) > 120:
-                                tree['Size'] = 2
-                            obj.save_typetree(tree)
-        with open(path, "wb") as f:
-            f.write(env.file.save())
+        return story_data
+    return {}
 
 
-def extract_episode(data):
-    str_tl_id = str(data['episode'].tl_id)
-    meta_tl_id = '0' * (9 - len(str_tl_id)) + str_tl_id
-    meta_path, dat = m_c.execute(f"select n,h from a where n LIKE '%storytimeline_{meta_tl_id}'").fetchone()
-    dir_paths = [
-        'extracted',
-        f"extracted/{data['story'].name}",
-        f"extracted/{data['story'].name}/{data['chapter'].id}.{data['chapter'].name}"
-    ]
-    for path in dir_paths:
+def patch_storytimeline(dat, story_data):
+    path = f'../../dat/{dat[:2]}/{dat}'
+    backup = f'backup/{dat}'
+    if not os.path.exists(backup):
         try:
-            os.mkdir(path)
+            os.mkdir('backup')
         except FileExistsError:
             pass
-    extract_dat(dat, meta_path, f"extracted/{data['story'].name}/{data['chapter'].id}.{data['chapter'].name}/{data['episode'].ep_num}.{data['episode'].name}.csv")
+        copyfile(path, backup)
+    env = UnityPy.load(backup)
+    for obj in env.objects:
+        if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
+            for node in obj.serialized_type.nodes:
+                if node.name == 'NextBlock':
+                    tree = obj.read_typetree()
+                    block = tree['NextBlock'] - 1 * (tree['NextBlock'] > 0)
+                    if story_data.get(block):
+                        tree = {**tree, **story_data[block]}
+                        for choice in story_data[block].get('Choices', []):
+                            try:
+                                choice_index = choice.get('Number') - 1
+                                tree['ChoiceDataList'][choice_index] = {**tree['ChoiceDataList'][choice_index], **choice}
+                            except IndexError:
+                                pass
+                        if len(story_data[block].get('Text', '')) > 120:
+                            tree['Size'] = 2
+                        obj.save_typetree(tree)
+    with open(path, "wb") as f:
+        f.write(env.file.save())
 
 
-def load_episode(data):
+def patch_storyrace(dat, story_data):
+    path = f'../../dat/{dat[:2]}/{dat}'
+    backup = f'backup/{dat}'
+    if not os.path.exists(backup):
+        try:
+            os.mkdir('backup')
+        except FileExistsError:
+            pass
+        copyfile(path, backup)
+    env = UnityPy.load(backup)
+    for obj in env.objects:
+        if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
+            for node in obj.serialized_type.nodes:
+                if node.name == 'textData':
+                    tree = obj.read_typetree()
+                    for i, line in enumerate(tree['textData']):
+                        key = line['key']
+                        if story_data.get(key):
+                            story_data[key]['text'] = story_data[key]['Text']
+                            tree['textData'][i] = {**line, **story_data[key]}
+                    obj.save_typetree(tree)
+    with open(path, "wb") as f:
+        f.write(env.file.save())
+
+
+def patch_episode(data):
     meta_path, slot, file_path = data
-    dat = m_c.execute(f"select h from a where n LIKE '{meta_path}'").fetchone()
-    dat = list(dat) + [slot, file_path]
-    load_dat(dat)
+    dat, *_ = m_c.execute(f"select h from a where n LIKE '{meta_path}'").fetchone()
+    story_data = read_csv_timeline(slot, file_path)
+    if 'storytimeline' in meta_path:
+        patch_storytimeline(dat, story_data)
+    if 'storyrace' in meta_path:
+        patch_storyrace(dat, story_data)
 
 
 class Story():
@@ -177,7 +266,6 @@ class Story():
             ep = find_ep(ep_list, story_type.get('id_key'), id_)
             if ep:
                 ep_data[id_] = {**ep, **{'name': name}}
-                # ep_data[id_]['name'] = name
 
         self.chapters = {id_: Chapter(id_, name) for id_, name in chap_data}
 
@@ -208,17 +296,23 @@ class Episode():
     def __init__(self, data):
         for arg in data:
             setattr(self, arg, data[arg])
-            if arg in ['episode_index', 'episode_index_id', 'show_progress_1']:
+            if arg in ['story_number', 'episode_index', 'episode_index_id', 'show_progress_1']:
                 self.ep_num = data[arg]
-            if arg in ['story_id_1', 'story_id']:
+            if arg in ['story_id_1']:
                 self.tl_id = data[arg]
-        pass
+                self.multipart = True
+            if arg in ['story_id']:
+                self.tl_id = data[arg]
+                self.multipart = False
+                self.type = 1
+            if arg in ['story_type_1', 'story_type']:
+                self.type = data[arg]
 
 
 def main():
 
     root = tk.Tk()
-    root.title('Uma Musume Story Patcher (Alpha)')
+    root.title('Uma Musume Story Patcher (Beta)')
     root.iconphoto(False, tk.PhotoImage(file='utx_ico_home_umamusume_12.png'))
     root.geometry('900x600')
     root.minsize(600, 400)
@@ -311,8 +405,6 @@ def main():
                     extract_episode(data)
             except Exception as e:
                 print(f'Error in extractStories {e}')
-                import traceback
-                print(traceback.format_exc())
             progress['value'] = ((i + 1) / length) * 100
             frame.update_idletasks()
 
@@ -320,7 +412,7 @@ def main():
     btn_extract.pack(side='left')
     btn_extract.configure(command=extractStories)
 
-    def loadStories():
+    def patchStories():
         progress['value'] = 0
         frame.update_idletasks()
         count = 0
@@ -360,7 +452,7 @@ def main():
                             lang = settings.get('Language', '')
                             if lang.lower() in ['english', 'en']:
                                 try:
-                                    load_episode((settings.get('Path'), settings.get('Slot'), fp))
+                                    patch_episode((settings.get('Path'), settings.get('Slot'), fp))
                                     print(f"Pathched '{file}' in {lang}")
                                 except Exception as e:
                                     raise e
@@ -373,7 +465,7 @@ def main():
 
     btn_load = ttk.Button(nav, text='Patch All')
     btn_load.pack(side='left')
-    btn_load.configure(command=loadStories)
+    btn_load.configure(command=patchStories)
 
     def backup_restore():
         progress['value'] = 0
