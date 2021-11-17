@@ -342,6 +342,8 @@ def main():
         {'id': 189, 'name': 'Event Story', 'sub_id': 191, 'table': 'story_event_story_data', 'id_key': 'id', 'chap_key': 'story_event_id'},
         {'id': 182, 'name': 'Chara Story', 'sub_id': 92, 'table': 'chara_story_data', 'id_key': 'story_id', 'chap_key': 'chara_id'},
         {'id': 182, 'name': 'Training Chara Story', 'sub_id': 181, 'table': 'single_mode_story_data', 'where': 'where card_chara_id != 0', 'id_key': 'story_id', 'chap_key': 'card_chara_id'},
+        {'id': 182, 'name': 'Support Chara Story', 'sub_id': 181, 'table': 'single_mode_story_data', 'where': 'where support_chara_id != 0', 'id_key': 'story_id', 'chap_key': 'support_chara_id'},
+        {'id': 75, 'name': 'Support Card Story', 'sub_id': 181, 'table': 'single_mode_story_data', 'where': 'where support_card_id != 0', 'id_key': 'story_id', 'chap_key': 'support_card_id'},
     ]
     stories = [Story(story_type) for story_type in story_types]
 
@@ -375,6 +377,9 @@ def main():
                     episode.tl_id
                 ]
                 tree.insert(chapter.id, tk.END, iid=episode.tl_id, text=episode.name, values=(*values,))
+        for chapter in tree.get_children():
+            if not tree.get_children(chapter):
+                tree.delete(chapter)
         tree.grid(row=0, column=0, sticky='NSEW')
 
         vsb = ttk.Scrollbar(tab_frame, orient="vertical", command=tree.yview)
