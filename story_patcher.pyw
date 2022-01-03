@@ -30,7 +30,7 @@ def extract_storytimeline(dat, meta_path, save_path):
     env = UnityPy.load(path)
     data = {}
     for obj in env.objects:
-        if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
+        if obj.type.name == 'MonoBehaviour' and obj.serialized_type.nodes:
             for node in obj.serialized_type.nodes:
                 if node.name == 'NextBlock':
                     tree = obj.read_typetree()
@@ -74,7 +74,7 @@ def extract_storyrace(dat, meta_path, save_path):
     env = UnityPy.load(path)
     data = {}
     for obj in env.objects:
-        if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
+        if obj.type.name == 'MonoBehaviour' and obj.serialized_type.nodes:
             for node in obj.serialized_type.nodes:
                 if node.name == 'textData':
                     tree = obj.read_typetree()
@@ -192,7 +192,7 @@ def patch_storytimeline(dat, story_data):
         copyfile(path, backup)
     env = UnityPy.load(backup)
     for obj in env.objects:
-        if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
+        if obj.type.name == 'MonoBehaviour' and obj.serialized_type.nodes:
             for node in obj.serialized_type.nodes:
                 if node.name == 'NextBlock':
                     tree = obj.read_typetree()
@@ -223,7 +223,7 @@ def patch_storyrace(dat, story_data):
         copyfile(path, backup)
     env = UnityPy.load(backup)
     for obj in env.objects:
-        if obj.type == 'MonoBehaviour' and obj.serialized_type.nodes:
+        if obj.type.name == 'MonoBehaviour' and obj.serialized_type.nodes:
             for node in obj.serialized_type.nodes:
                 if node.name == 'textData':
                     tree = obj.read_typetree()
@@ -312,7 +312,7 @@ class Episode():
 def main():
 
     root = tk.Tk()
-    root.title('Uma Musume Story Patcher (Beta)')
+    root.title('Uma Musume Story Patcher')
     root.iconphoto(False, tk.PhotoImage(file='utx_ico_home_umamusume_12.png'))
     root.geometry('900x600')
     root.minsize(600, 400)
@@ -336,6 +336,31 @@ def main():
         tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
 
     trees = []
+
+    def check_status(msg='translated'):
+        for dat in os.listdir('backup'):
+            path = f'../../dat/{dat[:2]}/{dat}'
+            if os.path.exists(path) and os.path.getsize(path) != os.path.getsize(os.path.join('backup', dat)):
+                tl_id = int(m_c.execute(f"select n from a where h = '{dat}'").fetchone()[0].split('_')[-1])
+                found = False
+                for story in stories:
+                    for chap_id, chapter in story.chapters.items():
+                        if chapter.episodes.get(tl_id):
+                            found = set_status(chap_id, tl_id, msg)
+                            break
+                    if found:
+                        break
+
+    def set_status(chap_id, ep_id, msg: str):
+        for tree in trees:
+            chap = tree.get_children(chap_id)
+            if str(ep_id) in chap:
+                vals = tree.item(ep_id)['values']
+                vals[2] = msg
+                tree.item(ep_id, values=vals)
+                return True
+            break
+        return False
 
     story_types = [
         {'id': 112, 'name': 'Main Story', 'sub_id': 94, 'table': 'main_story_data', 'where': 'where story_number != 0', 'id_key': 'id', 'chap_key': 'part_id'},
@@ -374,7 +399,8 @@ def main():
             for episode in chapter.episodes.values():
                 values = [
                     episode.ep_num,
-                    episode.tl_id
+                    episode.tl_id,
+                    ''
                 ]
                 tree.insert(chapter.id, tk.END, iid=episode.tl_id, text=episode.name, values=(*values,))
         for chapter in tree.get_children():
@@ -389,8 +415,9 @@ def main():
         hsb = ttk.Scrollbar(tab_frame, orient="horizontal", command=tree.xview)
         hsb.grid(row=1, column=0, sticky='NSEW')
         tree.configure(xscrollcommand=hsb.set)
-
         trees.append(tree)
+
+    check_status()
 
     progress = ttk.Progressbar(frame, orient='horizontal', length=100, mode='determinate')
     progress.pack(fill='x')
@@ -467,6 +494,7 @@ def main():
                 frame.update_idletasks()
         progress['value'] = 100
         frame.update_idletasks()
+        check_status()
 
     btn_load = ttk.Button(nav, text='Patch All')
     btn_load.pack(side='left')
@@ -477,6 +505,7 @@ def main():
         frame.update_idletasks()
         dat_list = os.listdir('backup')
         length = len(dat_list)
+        check_status('')
         for i, dat in enumerate(dat_list):
             path = f'../../dat/{dat[:2]}/{dat}'
             backup = f'backup/{dat}'

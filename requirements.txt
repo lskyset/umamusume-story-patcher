@@ -1,1 +1,1 @@
-unitypy==1.7.11
+unitypy

@@ -1,10 +1,13 @@
 # umamusume-story-patcher
 
+*Now works with the latest version of UnityPy*
+
 ## How to use
 
-* Go to your umamusume folder, usually `C:\Users\<user>\AppData\LocalLow\Cygames\umamusume`  
-* Make a mods folder and clone this repo inside it
-  `C:\Users\<user>\AppData\LocalLow\Cygames\umamusume\mods\umamusume-story-patcher` 
+* Go to your umamusume folder, usually  
+`C:\Users\<user>\AppData\LocalLow\Cygames\umamusume`
+* Make a mods folder and clone this repo inside it  
+`C:\Users\<user>\AppData\LocalLow\Cygames\umamusume\mods\umamusume-story-patcher`
 * Run `python pip install -r requirements.txt` in your terminal
 * Run `story_patcher.pyw`
 * Extract some story
@@ -14,6 +17,8 @@
 
 ## Infos
 
-It is still not fully working and things are subject to changes  
-I will make a proper tutorial on how to make translation files later  
-For any questions or suggestions DM me on discord (SkySet#3043)
+* You can take a look at the translated csv files (and the patched result in game)  
+to see how the translations works  
+* Hardcoded to translate only if the language is set to English for now but i'll  
+add a settings tab some day  
+* For any questions or suggestions DM me on discord (SkySet#3043)
