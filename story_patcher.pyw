@@ -365,6 +365,7 @@ def main():
     story_types = [
         {'id': 112, 'name': 'Main Story', 'sub_id': 94, 'table': 'main_story_data', 'where': 'where story_number != 0', 'id_key': 'id', 'chap_key': 'part_id'},
         {'id': 189, 'name': 'Event Story', 'sub_id': 191, 'table': 'story_event_story_data', 'id_key': 'id', 'chap_key': 'story_event_id'},
+        {'id': 221, 'name': 'Extra Story', 'sub_id': 222, 'table': 'story_extra_story_data', 'id_key': 'id', 'chap_key': 'story_extra_id'},
         {'id': 182, 'name': 'Chara Story', 'sub_id': 92, 'table': 'chara_story_data', 'id_key': 'story_id', 'chap_key': 'chara_id'},
         {'id': 182, 'name': 'Training Chara Story', 'sub_id': 181, 'table': 'single_mode_story_data', 'where': 'where card_chara_id != 0', 'id_key': 'story_id', 'chap_key': 'card_chara_id'},
         {'id': 182, 'name': 'Support Chara Story', 'sub_id': 181, 'table': 'single_mode_story_data', 'where': 'where support_chara_id != 0', 'id_key': 'story_id', 'chap_key': 'support_chara_id'},
