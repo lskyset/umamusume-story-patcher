@@ -32,7 +32,7 @@ def extract_storytimeline(dat, meta_path, save_path):
     for obj in env.objects:
         if obj.type.name == "MonoBehaviour" and obj.serialized_type.nodes:
             for node in obj.serialized_type.nodes:
-                if node.name == "NextBlock":
+                if node.m_Name == "NextBlock":
                     tree = obj.read_typetree()
                     block = tree["NextBlock"] - 1 * (tree["NextBlock"] > 0)
                     data[block] = {}
@@ -218,7 +218,7 @@ def patch_storytimeline(dat, story_data):
     for obj in env.objects:
         if obj.type.name == "MonoBehaviour" and obj.serialized_type.nodes:
             for node in obj.serialized_type.nodes:
-                if node.name == "NextBlock":
+                if node.m_Name == "NextBlock":
                     tree = obj.read_typetree()
                     block = tree["NextBlock"] - 1 * (tree["NextBlock"] > 0)
                     if story_data.get(block):
@@ -252,7 +252,7 @@ def patch_storyrace(dat, story_data):
     for obj in env.objects:
         if obj.type.name == "MonoBehaviour" and obj.serialized_type.nodes:
             for node in obj.serialized_type.nodes:
-                if node.name == "textData":
+                if node.m_Name == "textData":
                     tree = obj.read_typetree()
                     for i, line in enumerate(tree["textData"]):
                         key = line["key"]
